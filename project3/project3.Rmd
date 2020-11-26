@@ -1,0 +1,110 @@
+---
+title: "QBS 181 HW3"
+author: "Natt Chan"
+date: "11/22/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages}
+install.packages("dplyr", repos="http://cran.us.r-project.org")
+library(dplyr)
+library(tidyverse)
+library(magrittr)
+install.packages("nycflights13", repos="http://cran.us.r-project.org")
+library(nycflights13)
+library(lubridate)
+```
+
+\section{1. Compute the rate for table2, and table4a+table4b and perform the four operation}
+
+check out dplyr cheat sheet
+
+```{r 1a}
+table2.cases <- filter(table2, type == "cases") %>%
+  rename(cases = count) %>%
+  arrange(country, year)
+
+table2.cases
+
+```
+
+```{r 1b}
+table2.pop <- filter(table2, type == "population") %>%
+  rename(population = count) %>%
+  arrange(country, year)
+
+table2.pop
+```
+```{r 1c}
+table2.rate <- tibble(
+  year = table2.cases$year,
+  country = table2.cases$country,
+  cases = table2.cases$cases,
+  population = table2.pop$population
+) %>%
+  mutate(rate = (cases / population) * 10000) %>%
+  select(country, year, rate)
+
+table2.rate
+```
+```{r 1d}
+table2.rate <- table2.rate %>%
+  mutate(type = "rate") %>%
+  rename(count = rate) %>%
+  select(country, year, type, count)
+table2.rate
+
+(bind_rows(table2, table2.rate) %>%
+  arrange(country, year, type, count))
+
+```
+For table4a and table4b:
+
+```{r 1e}
+new.table4 <- tibble(
+    country = table4a$country,
+    `1999` = table4a[["1999"]] / table4b[["1999"]] * 10000,
+    `2000` = table4a[["2000"]] / table4b[["2000"]] * 10000
+  )
+new.table4
+
+```
+
+\section{2. Why does this code fail?}
+
+```{r 2}
+#table4a%>%gather(1999,2000,key="year",value="cases")
+```
+
+It is because we are trying to work with columns that do not exist.
+
+\section{3. Use the flights dataset in the nycflights13 library and answer the following:}
+
+
+\subsection{a. How does the distribution of flights times within a day change over the course of the year?}
+
+```{r 3a}
+flights
+#avg air time each day over course of year
+#sep column to consolidate times
+#summarise mean air time after grouping by day
+
+arrange(flights,month,year,day)
+avg_flight_time <- flights %>% filter(!is.na(air_time)) %>% group_by(year,month,day) %>% summarise(mean(air_time))
+head(avg_flight_time)
+
+```
+
+\subsection{b. Compare dep_time,sched_dep_time, and dep_delay. Are they consistent. Explain your findings:}
+
+```{r 3b}
+comparisons <- flights_jan1 %>%
+  select(dep_time, sched_dep_time, dep_delay)
+head(comparisons)
+```
+
+\subsection{c. Confirm my hypothesis that the early departures of flights in minutes 20-30 and 50-60 are caused by scheduled flights that leave early. Hint:create a binary variable that tells whether or not a flight was delayed.}
