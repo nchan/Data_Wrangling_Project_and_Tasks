@@ -1,0 +1,109 @@
+---
+title: "nchan(qbs181)_HW2_QBS181"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(RODBC)
+library(sqldf)
+library(ggplot2)
+library(stringr)
+library(tidyr)
+library(tidyverse)
+library(rmarkdown)
+sessionInfo()
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r 1}
+
+
+myconn<-odbcConnect("dartmouth2", "nchan", "nchan@qbs181")
+PhoneCall<-sqlQuery(myconn, "select * from dbo.PhoneCall")
+Encounters<-sqlQuery(myconn, "select * from dbo.PhoneCall_Encounter")
+PhoneCall$EnrollmentGroup = c(0)
+
+PhoneCall$EnrollmentGroup[PhoneCall$tri_CustomerIDEntityReference %in% Encounters$CustomerId] <- Encounters$EncounterCode
+
+PhoneCall$EnrollmentGroup<-gsub('125060000', 'Clinical Alert', PhoneCall$EnrollmentGroup)
+PhoneCall$EnrollmentGroup<-gsub('125060001', 'Health Coaching', PhoneCall$EnrollmentGroup)
+PhoneCall$EnrollmentGroup<-gsub('125060002', 'Technical Question', PhoneCall$EnrollmentGroup)
+PhoneCall$EnrollmentGroup<-gsub('125060003', 'Administrative', PhoneCall$EnrollmentGroup)
+PhoneCall$EnrollmentGroup<-gsub('125060004', 'Other', PhoneCall$EnrollmentGroup)
+PhoneCall$EnrollmentGroup<-gsub('125060005', 'Lack of Engagement', PhoneCall$EnrollmentGroup)
+
+#View(sample_n(PhoneCall, 10))
+
+
+```
+
+```{r 2}
+sum(str_count(PhoneCall$EnrollmentGroup, "Clinical Alert"))
+sum(str_count(PhoneCall$EnrollmentGroup, "Health Coaching"))
+sum(str_count(PhoneCall$EnrollmentGroup, "Technical Question"))
+sum(str_count(PhoneCall$EnrollmentGroup, "Administrative"))
+sum(str_count(PhoneCall$EnrollmentGroup, "Other"))
+sum(str_count(PhoneCall$EnrollmentGroup, "Lack of Engagement"))
+```
+
+```{r 3}
+CallDuration<-sqlQuery(myconn, "select * from dbo.CallDuration")
+
+Encounters_Duration<-merge(Encounters, CallDuration, by.x = "CustomerId",
+                            by.y = "tri_CustomerIDEntityReference")
+
+#View(sample_n(Encounters_Duration, 10))
+
+```
+
+
+```{r 4}
+Encounters_Duration$CallType<-gsub('1', 'Inbound', Encounters_Duration$CallType)
+Encounters_Duration$CallType<-gsub('2', 'Outbound', Encounters_Duration$CallType)
+
+Encounters_Duration$CallOutcome<-gsub('1', 'No Response', Encounters_Duration$CallOutcome)
+Encounters_Duration$CallOutcome<-gsub('2', 'Left Voicemail', Encounters_Duration$CallOutcome)
+Encounters_Duration$CallOutcome<-gsub('3', 'Successful', Encounters_Duration$CallOutcome)
+
+Encounters_Duration %>% count(CallType)
+Encounters_Duration %>% count(CallOutcome)
+
+aggregate(x = PhoneCall$CallDuration,
+          by = list(PhoneCall$EnrollmentGroup),
+          FUN = sum)
+
+```
+
+```{r 5}
+Demographics<-sqlQuery(myconn, "select * from dbo.Demographics")
+Conditions<-sqlQuery(myconn, "select * from dbo.Conditions")
+TextMessages<-sqlQuery(myconn, "select * from dbo.Text")
+
+
+tempDemoConditions<-merge(Demographics, Conditions, by.x = "contactid",
+                            by.y = "tri_patientid")
+
+TextDemoConditions<-merge(TextMessages, tempDemoConditions, by.x = "tri_contactId", by.y = "contactid")
+
+TextDemoConditions$WeekNo <- strftime(TextDemoConditions$TextSentDate, format="%V")
+
+TextDemoConditions %>% count(WeekNo, SenderName)
+
+
+```
+
+
+```{r 6}
+
+
+TextDemoConditions %>% count(WeekNo, tri_name)
+
+
+```
+
