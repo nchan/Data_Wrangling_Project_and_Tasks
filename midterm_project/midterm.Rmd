@@ -1,0 +1,97 @@
+---
+title: "nchan(qbs181)_Midterm_QBS181"
+author: "Natt Chan"
+date: "10/31/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-packages, include=FALSE}
+library(Hmisc)
+library(SASxport)
+library(tidyverse)
+```
+
+
+```{r 1}
+lookup.xport("/Users/natt/Desktop/DIQ_I.XPT")
+midtermDiabetes<-read.xport("/Users/natt/Desktop/DIQ_I.XPT")
+#head(midtermDiabetes)
+
+#sapply(midtermDiabetes, typeof)
+str(midtermDiabetes)
+
+delete.na <- function(DF, n=0) {
+  DF[rowSums(is.na(DF)) <= n,]
+}
+
+midtermDiabetes <- delete.na(midtermDiabetes, 53)
+
+midtermDiabetes$DID060 <- ifelse(midtermDiabetes$DIQ060U == 2, midtermDiabetes$DID060*12, midtermDiabetes$DID060)
+drop <- c("DIQ060U")
+midtermDiabetes = midtermDiabetes[,!(names(midtermDiabetes) %in% drop)]
+
+
+midtermDiabetes[is.na(midtermDiabetes)] <- "."
+
+
+```
+
+\section{1. DIQ_1.XPT file}
+
+\subsection{a. List the data-related issues you see in this data set}
+
+* I want to check which rows are completely filled with NAs, then remove those rows.
+* DID060 'How long taking insulin can be standardized to either months or years, based on the column next to it, DIQ060U 'Unit of measure (month/year)'
+* Missing values should be replaced with a "."
+
+\subsection{b. How will you address each data-related issue?}
+
+* I will make a function that takes a minimum number of acceptable empty columns for each row (53), then remove those rows.
+* I will multiply all the values in DID060 by 12 for those that are denoted by year.
+  + Because I standardised all the values in DID060, I can drop the DIQ060U column since there's no more need to keep it.
+* I will turn all missing values in the dataset into a ".".
+
+\subsection{c. Give justification for why you chose a particular way to address each issue.}
+
+
+* I tried to remove the completely empty rows (there are none) with a function for which I could adjust the number of acceptable empty columns per row. This was an exercise for myself to see how many columns in general were empty.
+* I chose to multiply all the DID060 values that were accompanied by a 2 in the DIQ060U column by 12, so as to standardize the unit of time for how long each respondent was taking insulin.
+  + Also dropped the DIQ060U column since all the units of time using insulin are standardized.
+* I chose to replace all missing values (NA) with "." as that is what was detailed in the guidelines for the data site in the link provided, rather than remove certain rows or columns. I believe this was the best approach so as to stay true to the original intent of the surveyers/creators of the dataset. Moreover, the designation of "." for Missing is consistent for all categories as specified by the guidelines.
+
+\section{2. Cleaning the Data}
+
+See code in section 1.
+
+\section{3. Verify whether the counts of each code or value of various variables are correct as mentions as mentioned in the website}
+
+For this, I will investigate 5 random column numbers using the sample.int() function to help me select which columns to check the counts of, out of 53 (since I removed one column earlier). Then I will get the names of these columns that I want to check. Finally I will cross check with the values detailed on the website. I will install tidyr to use the count() function.
+
+These are the columns I am interested in:
+* DIQ160 - these counts match up fine
+* DIQ070 - counts match up
+* DIQ175I - counts match up
+* DIQ175E - counts match up
+* DID310D - counts match up
+
+```{r 3}
+sample <- c(4, 34, 15, 11, 46)
+colnames(midtermDiabetes[1, sample])
+
+midtermDiabetes %>% count(DIQ160)
+midtermDiabetes %>% count(DIQ070)
+midtermDiabetes %>% count(DIQ175I)
+midtermDiabetes %>% count(DIQ175E)
+
+midtermDiabetes %>% count(between(DID310D, 18, 140))
+midtermDiabetes %>% count(midtermDiabetes$DID310D == 6666)
+midtermDiabetes %>% count(midtermDiabetes$DID310D == 7777)
+midtermDiabetes %>% count(midtermDiabetes$DID310D == 9999)
+midtermDiabetes %>% count(midtermDiabetes$DID310D == ".")
+```
+
+
