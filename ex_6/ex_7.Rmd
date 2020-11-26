@@ -1,0 +1,50 @@
+---
+title: "Exercise 7"
+author: "Natt Chan"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r load-packages}
+library(rvest)
+library(magrittr)
+library(rjson)
+install.packages("rnoaa",repos = "http://cran.us.r-project.org")
+library(rnoaa)
+```
+
+\section{1. Scrape https://geiselmed.dartmouth.edu/qbs/2019-cohort/}
+
+```{r 1}
+scraping_qbs <- read_html("https://geiselmed.dartmouth.edu/qbs/2019-cohort")
+head(scraping_qbs)
+(h1_text <- scraping_qbs %>% html_nodes("h1") %>%html_text())
+(h2_text <- scraping_qbs %>% html_nodes("h2") %>%html_text())
+(ul_text <- scraping_qbs %>% html_nodes("ul") %>%html_text())
+(strong_text <- scraping_qbs %>%html_nodes("strong") %>%html_text())
+(student_names <- strong_text[seq(2, length(strong_text),4)])
+(student_hometowns <- strong_text[seq(3, length(strong_text), 4)])
+(languages <- strong_text[seq(4, length(strong_text), 4)])
+(undergrad_degrees <- strong_text[seq(5, length(strong_text), 4)])
+```
+
+\section{2. Use the library rnoaa and obtain a web token from this url www.ncdc.noaa.gov/cdo-web/token and obtain min and max temperature of WRIGHT PATTERSON AFB, OH US}
+
+```{r 2}
+options(noaakey = "jJhTWTLQFHpApcuwmcxuQLESpiXvsfPU")
+
+(WPAFB <- meteo_tidy_ghcnd(stationid = "USC00331458", var = c("TMAX", "TMIN"), date_min = "2020-11-04",date_max = "2020-11-04"))
+max_temp <- WPAFB$tmax
+min_temp <- WPAFB$tmin
+max_temp
+min_temp
+```
