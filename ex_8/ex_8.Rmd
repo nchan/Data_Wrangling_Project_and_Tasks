@@ -1,0 +1,46 @@
+---
+title: "Exercise 8"
+author: "Natt Chan"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r load-packages}
+install.packages("https://cran.r-project.org/src/contrib/Archive/rtimes/rtimes_0.5.0.tar.gz", repos = NULL, type="source")
+library(rtimes)
+
+install.packages("twitteR", repos="http://cran.us.r-project.org")
+library(twitteR)
+```
+
+\section{1. Obtain articles written on climate change in the last 3 years}
+
+```{r 1}
+article_key <- "MbSrLSovlhrY5IbxEJC52F4h1GfVZC7F"
+article_search_Climate_Change <- as_search(q = "climate change", begin_date = "20171105", end_date = "20201105", key = article_key, fl = "headline")
+names(article_search_Climate_Change)
+article_search_Climate_Change$meta
+headlines <- article_search_Climate_Change$data$headline.main
+headlines
+```
+
+
+\section{2. Use your twitter credentials and obtain tweets talking about earth hour}
+
+Go to apps.twitter.com
+
+```{r 2}
+
+#I was unable to ultimately gain access to a Twitter developer account
+
+
+```
